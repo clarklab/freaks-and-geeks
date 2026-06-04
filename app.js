@@ -281,23 +281,34 @@
     meta.appendChild(h3);
 
     var v = verdict(ep.n);
-    var vEl = el("div", "verdict");
+    var cRated = getRating(ep.n, "clark") !== null;
+    var aRated = getRating(ep.n, "angie") !== null;
     if (v !== null) {
+      var vEl = el("div", "verdict");
       var vn = el("span", "v-num");
       vn.innerHTML = fmt(v) + "<small>/10</small>";
       vEl.appendChild(vn);
       vEl.appendChild(document.createTextNode("shared verdict"));
-    } else {
-      vEl.className = "verdict pending";
-      vEl.appendChild(document.createTextNode(needText(ep.n)));
+      meta.appendChild(vEl);
+    } else if (cRated || aRated) {
+      var pEl = el("div", "verdict pending");
+      pEl.appendChild(document.createTextNode(needText(ep.n)));
+      meta.appendChild(pEl);
     }
-    meta.appendChild(vEl);
 
     var mini = el("div", "mini-row");
     RATERS.forEach(function (r) {
       var span = el("span");
       var rv = getRating(ep.n, r.key);
-      span.innerHTML = "<b>" + r.label + "</b> " + (rv === null ? "—" : fmt(rv) + "/10");
+      var b = el("b");
+      b.textContent = r.label;
+      span.appendChild(b);
+      if (rv === null) {
+        var icon = sym("star", "ms-empty");
+        span.appendChild(icon);
+      } else {
+        span.appendChild(document.createTextNode(fmt(rv) + "/10"));
+      }
       mini.appendChild(span);
     });
     meta.appendChild(mini);

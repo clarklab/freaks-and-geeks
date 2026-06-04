@@ -348,13 +348,6 @@ main {
   color: var(--ink-soft);
 }
 .panel-title:first-child { margin-top: 4px; }
-.panel-title::before {
-  content: "";
-  flex: 0 0 18px;
-  height: 2px;
-  background: var(--oxblood);
-  border-radius: 2px;
-}
 .panel-title .count {
   font-size: 0.7rem;
   font-weight: 700;
@@ -548,8 +541,13 @@ main {
   flex-wrap: wrap;
   font-variant-numeric: tabular-nums;
 }
-.mini-row span { display: inline-flex; gap: 4px; align-items: baseline; }
+.mini-row span { display: inline-flex; gap: 5px; align-items: center; }
 .mini-row b { color: var(--ink-soft); font-weight: 600; }
+.mini-row .ms-empty {
+  font-size: 14px;
+  color: var(--muted-soft);
+  line-height: 1;
+}
 
 .chev {
   margin-left: auto;
