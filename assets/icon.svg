@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#7b1e22"/>
+  <polygon points="256,96 298,206 416,206 321,275 357,386 256,318 155,386 191,275 96,206 214,206"
+           fill="#e8b53d"/>
+  <text x="256" y="466" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="120" font-weight="800" fill="#f5efe2" letter-spacing="-4">F&amp;G</text>
+</svg>
