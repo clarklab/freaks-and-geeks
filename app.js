@@ -723,23 +723,11 @@
       try {
         var t = document.startViewTransition(function () {
           doRender(opts);
-          // Wait until the freshly-mounted hero img has actually decoded
-          // AND been composited into the document — decode() alone resolves
-          // when the pixel data is in memory, but the element snapshot can
-          // still be captured before the next paint commits, which is why
-          // the new pseudo briefly reads as transparent.
           var target = document.querySelector(".detail-hero-img");
-          if (!target) return null;
-          var decodePromise = target.decode
-            ? target.decode().catch(function () { return null; })
-            : Promise.resolve();
-          return decodePromise.then(function () {
-            return new Promise(function (resolve) {
-              requestAnimationFrame(function () {
-                requestAnimationFrame(resolve);
-              });
-            });
-          });
+          if (target && target.decode) {
+            return target.decode().catch(function () { return null; });
+          }
+          return null;
         });
         if (t && t.finished && t.finished.then) {
           t.finished.then(function () {

@@ -1432,29 +1432,20 @@ body.is-detail main {
     animation: vt-fade-in 0.32s cubic-bezier(.4,0,.2,1) both;
   }
 
-  /* Hero morph: no cross-fade. Keep new fully opaque through the
-     geometry interpolation so it never blinks to transparent. */
+  /* Hero morph: hold new fully opaque through geometry interpolation. */
   ::view-transition-group(ep-hero) {
     animation-duration: 0.5s;
     animation-timing-function: cubic-bezier(.4, 0, .2, 1);
   }
-  ::view-transition-image-pair(ep-hero) {
-    isolation: auto !important;
-  }
   ::view-transition-old(ep-hero) {
-    animation: hero-hold-out 0.5s linear both !important;
-    mix-blend-mode: normal !important;
+    animation: none;
+    opacity: 0;
   }
   ::view-transition-new(ep-hero) {
-    animation: hero-hold-in 0.5s linear both !important;
-    mix-blend-mode: normal !important;
+    animation: none;
+    opacity: 1;
+    mix-blend-mode: normal;
   }
-}
-@keyframes hero-hold-out {
-  0%, 100% { opacity: 0; }
-}
-@keyframes hero-hold-in {
-  0%, 100% { opacity: 1; }
 }
 @keyframes vt-fade-out {
   to { opacity: 0; transform: translateY(-4px); }
