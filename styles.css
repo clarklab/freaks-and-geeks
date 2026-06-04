@@ -1432,21 +1432,24 @@ body.is-detail main {
     animation: vt-fade-in 0.32s cubic-bezier(.4,0,.2,1) both;
   }
 
-  /* Hero morph: hold new fully opaque through geometry interpolation. */
+  /* Hero morph: hold new fully opaque through geometry interpolation.
+     Use explicit hold-opacity keyframes — `animation: none` doesn't reliably
+     beat the UA's fade-in/fade-out keyframes on the matched pseudo-pair. */
   ::view-transition-group(ep-hero) {
     animation-duration: 0.5s;
     animation-timing-function: cubic-bezier(.4, 0, .2, 1);
   }
   ::view-transition-old(ep-hero) {
-    animation: none;
-    opacity: 0;
+    animation: hero-hold-out 0.5s linear both;
+    mix-blend-mode: normal;
   }
   ::view-transition-new(ep-hero) {
-    animation: none;
-    opacity: 1;
+    animation: hero-hold-in 0.5s linear both;
     mix-blend-mode: normal;
   }
 }
+@keyframes hero-hold-out { from, to { opacity: 0; } }
+@keyframes hero-hold-in  { from, to { opacity: 1; } }
 @keyframes vt-fade-out {
   to { opacity: 0; transform: translateY(-4px); }
 }
