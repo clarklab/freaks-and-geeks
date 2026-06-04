@@ -1,5 +1,5 @@
 /* Freaks & Geeks rater — service worker (offline-first, cache everything on install) */
-var CACHE = "fng-rater-v3";
+var CACHE = "fng-rater-v4";
 
 var ASSETS = [
   "./",

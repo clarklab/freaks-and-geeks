@@ -13,8 +13,26 @@
   var view = "episodes";
   var mode = "list"; // "list" | "detail"
   var detailN = null;
+  var pendingHeroN = null; // ep number to tag in next list render so it morphs from the hero
   var scrollMemo = 0;
   var hasViewTransitions = typeof document.startViewTransition === "function";
+
+  function clearHeroTags() {
+    document.querySelectorAll(".hero-src").forEach(function (e) {
+      e.classList.remove("hero-src");
+      e.style.viewTransitionName = "";
+    });
+  }
+  function tagHero(elem) {
+    clearHeroTags();
+    if (!elem) return;
+    elem.classList.add("hero-src");
+    elem.style.viewTransitionName = "ep-hero";
+  }
+  function findThumbForEp(epN) {
+    return document.querySelector('.card[data-n="' + epN + '"] .thumb-wrap')
+        || document.querySelector('.rank-item[data-n="' + epN + '"] .rthumb');
+  }
 
   // ---- state ----
   function loadRatings() {
@@ -228,7 +246,10 @@
     var head = el("div", "card-head");
 
     var thumbWrap = el("div", "thumb-wrap");
-    thumbWrap.style.viewTransitionName = "ep-hero-" + ep.n;
+    if (pendingHeroN === ep.n) {
+      thumbWrap.classList.add("hero-src");
+      thumbWrap.style.viewTransitionName = "ep-hero";
+    }
     var img = el("img", "thumb");
     img.src = stills[0] || "";
     img.alt = ep.title + " still";
@@ -615,11 +636,15 @@
       placeEl.textContent = place;
       li.appendChild(placeEl);
 
+      li.dataset.n = ep.n;
       var img = el("img", "rthumb");
       img.src = ep.still;
       img.alt = "";
       img.loading = "lazy";
-      img.style.viewTransitionName = "ep-hero-" + ep.n;
+      if (pendingHeroN === ep.n) {
+        img.classList.add("hero-src");
+        img.style.viewTransitionName = "ep-hero";
+      }
       li.appendChild(img);
 
       var mid = el("div");
@@ -682,16 +707,30 @@
     document.body.classList.toggle("is-detail", mode === "detail");
     if (hasViewTransitions && !opts.skipTransition) {
       try {
-        document.startViewTransition(function () { doRender(opts); });
+        var t = document.startViewTransition(function () { doRender(opts); });
+        if (t && t.finished && t.finished.then) {
+          t.finished.then(function () {
+            // After a list-bound transition, clear the hero tag so a
+            // subsequent unrelated re-render doesn't fade out a stray
+            // ep-hero pseudo with no NEW counterpart.
+            if (mode === "list") clearHeroTags();
+            pendingHeroN = null;
+          }).catch(function () {});
+        }
         return;
       } catch (e) {}
     }
     doRender(opts);
+    if (mode === "list") clearHeroTags();
+    pendingHeroN = null;
   }
 
   // ---- detail mode ----
   function enterDetail(epN) {
     if (mode === "detail") return;
+    // Tag the source thumb in the CURRENT (old) DOM so the morph has
+    // a starting position. The new render will tag the hero too.
+    tagHero(findThumbForEp(epN));
     detailN = epN;
     scrollMemo = window.scrollY || 0;
     mode = "detail";
@@ -701,6 +740,9 @@
   }
   function exitDetail() {
     if (mode !== "detail") return;
+    // Tell the next list render to tag the matching thumb so the hero
+    // morphs back into it.
+    pendingHeroN = detailN;
     mode = "list";
     detailN = null;
     haptic(10);
@@ -756,7 +798,8 @@
 
     // Hero
     var hero = el("div", "detail-hero");
-    hero.style.viewTransitionName = "ep-hero-" + ep.n;
+    hero.style.viewTransitionName = "ep-hero";
+    hero.classList.add("hero-src");
     var heroImg = el("img", "detail-hero-img");
     heroImg.src = stills[0] || "";
     heroImg.alt = ep.title + " still";
