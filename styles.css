@@ -1439,17 +1439,22 @@ body.is-detail main {
     animation-timing-function: cubic-bezier(.4, 0, .2, 1);
   }
   ::view-transition-image-pair(ep-hero) {
-    isolation: auto;
+    isolation: auto !important;
   }
   ::view-transition-old(ep-hero) {
-    animation: none;
-    opacity: 0;
+    animation: hero-hold-out 0.5s linear both !important;
+    mix-blend-mode: normal !important;
   }
   ::view-transition-new(ep-hero) {
-    animation: none;
-    opacity: 1;
-    mix-blend-mode: normal;
+    animation: hero-hold-in 0.5s linear both !important;
+    mix-blend-mode: normal !important;
   }
+}
+@keyframes hero-hold-out {
+  0%, 100% { opacity: 0; }
+}
+@keyframes hero-hold-in {
+  0%, 100% { opacity: 1; }
 }
 @keyframes vt-fade-out {
   to { opacity: 0; transform: translateY(-4px); }

@@ -30,8 +30,11 @@
     elem.style.viewTransitionName = "ep-hero";
   }
   function findThumbForEp(epN) {
-    return document.querySelector('.card[data-n="' + epN + '"] .thumb-wrap')
-        || document.querySelector('.rank-item[data-n="' + epN + '"] .rthumb');
+    var card = document.querySelector('.card[data-n="' + epN + '"]');
+    if (card) return card.querySelector(".thumb");
+    var rank = document.querySelector('.rank-item[data-n="' + epN + '"]');
+    if (rank) return rank.querySelector(".rthumb");
+    return null;
   }
 
   // ---- state ----
@@ -246,14 +249,14 @@
     var head = el("div", "card-head");
 
     var thumbWrap = el("div", "thumb-wrap");
-    if (pendingHeroN === ep.n) {
-      thumbWrap.classList.add("hero-src");
-      thumbWrap.style.viewTransitionName = "ep-hero";
-    }
     var img = el("img", "thumb");
     img.src = stills[0] || "";
     img.alt = ep.title + " still";
     img.loading = "lazy";
+    if (pendingHeroN === ep.n) {
+      img.classList.add("hero-src");
+      img.style.viewTransitionName = "ep-hero";
+    }
     thumbWrap.appendChild(img);
     var thumbEpno = el("div", "thumb-epno");
     thumbEpno.innerHTML = "Ep <b>" + ep.n + "</b>";
@@ -720,14 +723,23 @@
       try {
         var t = document.startViewTransition(function () {
           doRender(opts);
-          // Wait for the morphing image to fully decode before the NEW
-          // snapshot is taken — otherwise the freshly-mounted hero img
-          // can be captured blank, causing a brief opacity flicker.
+          // Wait until the freshly-mounted hero img has actually decoded
+          // AND been composited into the document — decode() alone resolves
+          // when the pixel data is in memory, but the element snapshot can
+          // still be captured before the next paint commits, which is why
+          // the new pseudo briefly reads as transparent.
           var target = document.querySelector(".detail-hero-img");
-          if (target && target.decode) {
-            return target.decode().catch(function () { return null; });
-          }
-          return null;
+          if (!target) return null;
+          var decodePromise = target.decode
+            ? target.decode().catch(function () { return null; })
+            : Promise.resolve();
+          return decodePromise.then(function () {
+            return new Promise(function (resolve) {
+              requestAnimationFrame(function () {
+                requestAnimationFrame(resolve);
+              });
+            });
+          });
         });
         if (t && t.finished && t.finished.then) {
           t.finished.then(function () {
@@ -816,11 +828,10 @@
 
     // Hero
     var hero = el("div", "detail-hero");
-    hero.style.viewTransitionName = "ep-hero";
-    hero.classList.add("hero-src");
-    var heroImg = el("img", "detail-hero-img");
+    var heroImg = el("img", "detail-hero-img hero-src");
     heroImg.src = stills[0] || "";
     heroImg.alt = ep.title + " still";
+    heroImg.style.viewTransitionName = "ep-hero";
     hero.appendChild(heroImg);
     var shade = el("div", "detail-hero-shade");
     hero.appendChild(shade);
