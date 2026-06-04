@@ -1,5 +1,5 @@
 /* Freaks & Geeks rater — service worker (offline-first, cache everything on install) */
-var CACHE = "fng-rater-v1";
+var CACHE = "fng-rater-v2";
 
 var ASSETS = [
   "./",
@@ -64,7 +64,7 @@ self.addEventListener("fetch", function (e) {
       if (cached) return cached;
       return fetch(e.request)
         .then(function (resp) {
-          if (resp && resp.status === 200 && resp.type === "basic") {
+          if (resp && resp.status === 200 && (resp.type === "basic" || resp.type === "cors")) {
             var copy = resp.clone();
             caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
           }
