@@ -707,12 +707,19 @@
     document.body.classList.toggle("is-detail", mode === "detail");
     if (hasViewTransitions && !opts.skipTransition) {
       try {
-        var t = document.startViewTransition(function () { doRender(opts); });
+        var t = document.startViewTransition(function () {
+          doRender(opts);
+          // Wait for the morphing image to fully decode before the NEW
+          // snapshot is taken — otherwise the freshly-mounted hero img
+          // can be captured blank, causing a brief opacity flicker.
+          var target = document.querySelector(".detail-hero-img");
+          if (target && target.decode) {
+            return target.decode().catch(function () { return null; });
+          }
+          return null;
+        });
         if (t && t.finished && t.finished.then) {
           t.finished.then(function () {
-            // After a list-bound transition, clear the hero tag so a
-            // subsequent unrelated re-render doesn't fade out a stray
-            // ep-hero pseudo with no NEW counterpart.
             if (mode === "list") clearHeroTags();
             pendingHeroN = null;
           }).catch(function () {});
