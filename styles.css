@@ -872,16 +872,16 @@ main {
 
 .stars {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   user-select: none;
   touch-action: none;
-  padding: 4px 2px;
-  margin: -4px -2px;
+  padding: 6px 4px;
+  margin: -6px -4px;
   position: relative;
-  border-radius: 10px;
+  border-radius: 12px;
   transition: background 0.18s ease;
 }
-.stars.editable { cursor: ew-resize; }
+.stars.editable { cursor: pointer; }
 .stars.editable:focus-visible {
   outline: none;
   background: rgba(123, 30, 34, 0.06);
@@ -889,26 +889,32 @@ main {
 }
 .stars.is-dragging {
   background: rgba(210, 154, 42, 0.10);
+  cursor: ew-resize;
 }
 
 .star {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  pointer-events: none;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 44px;
+  cursor: pointer;
 }
+.stars:not(.editable) .star { cursor: default; }
 .star .material-symbols-rounded {
-  font-size: 28px;
+  font-size: 34px;
   color: #d6c8ad;
   transition: color 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
 }
 .star .material-symbols-rounded.filled {
   color: var(--gold);
   filter: drop-shadow(0 1px 1px rgba(146, 100, 0, 0.2));
 }
+.stars.editable .star:hover .material-symbols-rounded { transform: scale(1.08); }
 .stars.is-dragging .star .filled { transform: scale(1.08); }
 
 .mini-stars { display: inline-flex; gap: 1px; vertical-align: -2px; }
@@ -1084,7 +1090,6 @@ main {
   .thumb { width: 108px; min-height: 96px; }
   .card-meta { padding: 11px 12px 12px; }
   .card-meta h3 { font-size: 1.02rem; }
-  .star { width: 26px; height: 26px; }
   .rank-item { grid-template-columns: 36px 76px 1fr auto; gap: 10px; padding: 9px 12px 9px 8px; }
   .rank-item .rthumb { width: 76px; height: 50px; }
   .rank-item .rtitle { font-size: 0.94rem; }
@@ -1094,10 +1099,14 @@ main {
 }
 
 @media (min-width: 640px) {
-  .star { width: 32px; height: 32px; }
-  .star .material-symbols-rounded { font-size: 32px; }
+  .star { width: 40px; height: 40px; max-width: 48px; }
+  .star .material-symbols-rounded { font-size: 40px; }
   .card-head { grid-template-columns: 160px 1fr; }
   .thumb { width: 160px; min-height: 110px; }
+}
+@media (max-width: 420px) {
+  .star { width: 30px; height: 30px; }
+  .star .material-symbols-rounded { font-size: 30px; }
 }
 
 /* ---------- Detail page ---------- */

@@ -135,6 +135,7 @@
     for (var i = 1; i <= 10; i++) {
       var star = el("span", "star");
       star.dataset.idx = String(i);
+      if (opts.editable) attachStarClick(star, opts.onSet);
       wrap.appendChild(star);
     }
     paintStars(wrap, value);
@@ -149,14 +150,29 @@
     return wrap;
   }
 
+  // Per-star click — independent of the drag math so a single tap always
+  // resolves to a clean half-or-full of that star.
+  function attachStarClick(star, onSet) {
+    star.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var idx = parseInt(star.dataset.idx, 10);
+      var rect = star.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var v = x < rect.width / 2 ? idx - 0.5 : idx;
+      haptic(10);
+      onSet(v);
+    });
+  }
+
   function attachDrag(wrap, initialVal, onSet) {
     var dragging = false;
     var lastSnap = null;
+    var pdownX = 0;
     var initial = initialVal == null ? null : initialVal;
+    var DRAG_THRESHOLD = 6;
 
     function valueFromX(clientX) {
       var rect = wrap.getBoundingClientRect();
-      // Compute against the actual stars area (ignore wrap padding edges visually).
       var x = clientX - rect.left;
       var w = rect.width;
       var raw = (x / w) * 10;
@@ -173,43 +189,40 @@
         haptic(7);
       }
     }
-    wrap.addEventListener("pointerdown", function (e) {
-      if (e.button !== undefined && e.button !== 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      dragging = true;
-      lastSnap = null;
-      wrap.classList.add("is-dragging");
-      try { wrap.setPointerCapture(e.pointerId); } catch (e2) {}
+    function onPointerMove(e) {
+      if (!dragging) {
+        if (Math.abs(e.clientX - pdownX) < DRAG_THRESHOLD) return;
+        dragging = true;
+        lastSnap = null;
+        wrap.classList.add("is-dragging");
+      }
       move(e.clientX);
-    });
-    wrap.addEventListener("pointermove", function (e) {
-      if (!dragging) return;
-      e.stopPropagation();
-      move(e.clientX);
-    });
-    function release(e) {
+    }
+    function onPointerUp() {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerUp);
       if (!dragging) return;
       dragging = false;
       wrap.classList.remove("is-dragging");
-      if (e) {
-        try { wrap.releasePointerCapture(e.pointerId); } catch (e2) {}
-      }
       var final = lastSnap;
-      if (final === null) return;
-      if (final !== initial) {
+      if (final !== null && final !== initial) {
         haptic(14);
         onSet(final === 0 ? null : final);
       }
     }
-    wrap.addEventListener("pointerup", function (e) {
-      e.stopPropagation();
-      release(e);
+    wrap.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      pdownX = e.clientX;
+      dragging = false;
+      lastSnap = null;
+      document.addEventListener("pointermove", onPointerMove);
+      document.addEventListener("pointerup", onPointerUp);
+      document.addEventListener("pointercancel", onPointerUp);
     });
-    wrap.addEventListener("pointercancel", release);
-    wrap.addEventListener("lostpointercapture", function () {
-      if (dragging) { dragging = false; wrap.classList.remove("is-dragging"); }
-    });
+
+    // Stop card-bubble click only when a drag actually finished.
+    wrap.addEventListener("click", function (e) { e.stopPropagation(); });
 
     // Keyboard support
     wrap.addEventListener("keydown", function (e) {
@@ -226,9 +239,6 @@
       haptic(7);
       onSet(next === 0 ? null : next);
     });
-
-    // Stop card-head click toggle when interacting with stars
-    wrap.addEventListener("click", function (e) { e.stopPropagation(); });
   }
 
   // ---- stills helpers ----
@@ -723,11 +733,6 @@
       try {
         var t = document.startViewTransition(function () {
           doRender(opts);
-          var target = document.querySelector(".detail-hero-img");
-          if (target && target.decode) {
-            return target.decode().catch(function () { return null; });
-          }
-          return null;
         });
         if (t && t.finished && t.finished.then) {
           t.finished.then(function () {
@@ -1059,10 +1064,22 @@
     if (navigator.serviceWorker.controller) ready("offline ready");
   }
 
+  // Warm the browser cache for every episode still so the hero morph
+  // doesn't have to wait on a fresh decode when entering detail.
+  function preloadAllStills() {
+    EPS.forEach(function (ep) {
+      getStills(ep).forEach(function (src) {
+        var i = new Image();
+        i.src = src;
+      });
+    });
+  }
+
   // ---- boot ----
   initTabs();
   initReset();
   initOfflineChip();
   lightbox.init();
   renderView({ skipTransition: true });
+  preloadAllStills();
 })();
